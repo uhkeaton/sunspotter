@@ -3,14 +3,19 @@ import { createRoot } from "react-dom/client";
 import "./App.css";
 import "./index.css";
 
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
 import { Animation } from "./Animation.tsx";
 import { SunSpotter } from "./SunSpotter.tsx";
+import { Home } from "./Home.tsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <SunSpotter />,
+    element: <Home />,
   },
   {
     path: "/print",
@@ -19,6 +24,10 @@ const router = createBrowserRouter([
   {
     path: "/animation",
     element: <Animation />,
+  },
+  {
+    path: "*",
+    element: <Navigate to="/" />,
   },
 ]);
 
