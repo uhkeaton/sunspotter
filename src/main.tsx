@@ -5,6 +5,7 @@ import "./index.css";
 
 import {
   createBrowserRouter,
+  createHashRouter,
   Navigate,
   RouterProvider,
 } from "react-router-dom";
@@ -12,7 +13,8 @@ import { Animation } from "./Animation.tsx";
 import { SunSpotter } from "./SunSpotter.tsx";
 import { Home } from "./Home.tsx";
 
-const router = createBrowserRouter([
+// https://muffinman.io/blog/react-router-subfolder-on-server/
+const router = createHashRouter([
   {
     path: "/",
     element: <Home />,
