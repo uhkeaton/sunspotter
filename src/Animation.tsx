@@ -105,12 +105,14 @@ function toFramePoints(data: Data[]) {
 
       const timeProgress = frame / LAST_FRAME;
 
-      const deltaX = firstRow.x + (lastRow.x - firstRow.x) * timeProgress;
+      const deltaX =
+        (firstRow.x ?? 0) +
+        ((lastRow.x ?? 0) - (firstRow.x ?? 0)) * timeProgress;
 
       idCoords.push({
         id: id,
         x: deltaX,
-        y: lastRow.y,
+        y: lastRow.y ?? 0,
       });
     });
     return idCoords;
@@ -259,17 +261,28 @@ function Frame({ frame }: { frame: number }) {
   const elems = points.map(({ id, x, y }) => {
     const [px, py] = toLinearCoords([x, y]);
     return (
-      <div
-        style={{
-          width: SPOT_SIZE,
-          height: SPOT_SIZE,
-          borderRadius: "100%",
-          background: SPOT_COLOR,
-          position: "absolute",
-          bottom: `${py * 100}%`,
-          left: `${px * 100}%`,
-        }}
-      />
+      <>
+        <div
+          style={{
+            width: SPOT_SIZE,
+            height: SPOT_SIZE,
+            borderRadius: "100%",
+            background: SPOT_COLOR,
+            position: "absolute",
+            bottom: `${py * 100}%`,
+            left: `${px * 100}%`,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: `calc(${py * 100}% + 4px)`,
+            left: `calc(${px * 100}% - 8px)`,
+          }}
+        >
+          {id}
+        </div>
+      </>
     );
   });
   return <div>{elems}</div>;
@@ -282,8 +295,6 @@ function Grid({
   animationProgress: number;
   rangeMs: number;
 }) {
-  const points = 1000;
-
   // The Sun rotates on its axis once every 27 days on average,
   // but the rate of rotation varies by latitude
   // Equator 24.47 days
@@ -327,28 +338,4 @@ function Grid({
   }
 
   return <div>{elems.map((elem) => elem)}</div>;
-
-  return (
-    <div>
-      {new Array(points).fill(0).map((x, i) => {
-        const y = 1 - i / points;
-        const column = i % 8;
-        const added = column / 8;
-        const [px, py] = toLinearCoords([animationProgress + added, y]);
-        return (
-          <div
-            style={{
-              width: 2,
-              height: 2,
-              borderRadius: "100%",
-              background: "blue",
-              position: "absolute",
-              top: `${py * 100}%`,
-              left: `${px * 100}%`,
-            }}
-          />
-        );
-      })}
-    </div>
-  );
 }
