@@ -135,6 +135,10 @@ function interpolate(min: number, max: number, percent: number) {
   return min + delta * percent;
 }
 
+function smooth(x: number) {
+  return -(Math.cos(x * Math.PI) / 2) + 0.5;
+}
+
 export function Animation() {
   const minTimestamp = dateRange(data)[0];
   const maxTimestamp = dateRange(data)[1];
@@ -299,22 +303,39 @@ function Grid({
   // but the rate of rotation varies by latitude
   // Equator 24.47 days
   // Poles 34.3 days
-  const AVG_DAYS_SUN_ROTATION = 27;
+  const AVG_DAYS_POLE_ROTATION = 34.3;
+  const AVG_DAYS_EQUATOR_ROTATION = 24.47;
   const daysInAnimation = rangeMs / 1000 / 60 / 60 / 24;
-  const roationProgress =
-    animationProgress * (daysInAnimation / AVG_DAYS_SUN_ROTATION);
 
-  const COLS = AVG_DAYS_SUN_ROTATION; // one col per day
+  const poleRotationProgress =
+    animationProgress * (daysInAnimation / AVG_DAYS_POLE_ROTATION);
+
+  const equatorRotationProgress =
+    animationProgress * (daysInAnimation / AVG_DAYS_EQUATOR_ROTATION);
+
+  const COLS = 32;
   const ROWS = 100;
   const COL_WIDTH = 360 / COLS;
 
   let elems: JSX.Element[] = [];
 
   for (let x = 0; x < COLS; x++) {
-    const xOffset = (COL_WIDTH / 180) * x;
     for (let y = 0; y < ROWS; y++) {
-      const colX = roationProgress + xOffset;
+      const xOffset = (COL_WIDTH / 180) * x;
       const rowY = y / ROWS;
+
+      const distFromEquator = 1 - Math.abs(rowY - 0.5) * 2;
+
+      const colX =
+        interpolate(
+          poleRotationProgress,
+          equatorRotationProgress,
+          smooth(distFromEquator)
+        ) *
+          2 +
+        xOffset;
+
+      // console.log(rowY);
       const [px, py] = toLinearCoords([colX, rowY]);
       if (colX % 2 > 1) {
         // don't render lines on the back side of the sphere

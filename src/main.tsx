@@ -4,7 +4,6 @@ import "./App.css";
 import "./index.css";
 
 import {
-  createBrowserRouter,
   createHashRouter,
   Navigate,
   RouterProvider,
