@@ -1,6 +1,9 @@
 #root {
   height: 100vh;
   width: 100vw;
+  background-color: #20232a;
+
+  color: white;
 }
 
 @media print {
