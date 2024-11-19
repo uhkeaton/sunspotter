@@ -13,6 +13,20 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  height: 100vh;
+  width: 100vw;
+  background-color: #20232a;
+
+  color: white;
+}
+
+@media print {
+  .noprint {
+    visibility: hidden;
+  }
+}
+
 body {
   margin: 0;
   /* 
@@ -27,4 +41,22 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+}
+
+.navLink {
+  color: white;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.rotationSpotLabel {
+  visibility: hidden;
+}
+
+.rotationSpot:hover > * {
+  visibility: visible;
 }

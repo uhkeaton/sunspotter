@@ -1,36 +1,27 @@
 import { useEffect, useState } from "react";
 import { Table } from "./Table";
-import { Nav } from "./Nav";
 import { useGlobal } from "./useGlobal";
+import { Controls } from "./Controls";
 
-// styles
-const PROGRESS_WIDTH = 12;
-const PROGRESS_COLOR = "#40c2d7";
-const GRID_COLOR = "#40c2d7";
-const GRID_OPACITY = 0.8;
+import {
+  Data,
+  dateRange,
+  degToPercent,
+  interpolate,
+  isDefined,
+  sphericalToPosition,
+} from "./helpers";
 
-// sunspot
-const SPOT_COLOR = "#ff2600";
-const SPOT_SIZE = 8;
-
-// animation
-const FPS = 30;
-const ANIMATION_DURATION_MS = 5000;
-const LAST_FRAME = FPS * (ANIMATION_DURATION_MS / 1000);
-const TIMEOUT_INTERVAL = 1000 / FPS;
-
-export type Data = {
-  id: string;
-  date: string;
-  lat: number | null;
-  long: number | null;
-};
-
-/** Map range [-90, 90] to [0, 1] */
-function degToPercent(deg: number | null) {
-  if (deg == null || isNaN(deg)) return null;
-  return (deg + 90) / 180;
-}
+import {
+  LAST_FRAME,
+  TIMEOUT_INTERVAL,
+  PROGRESS_COLOR,
+  PROGRESS_WIDTH,
+  SPOT_SIZE,
+  SPOT_COLOR,
+  GRID_COLOR,
+  GRID_OPACITY,
+} from "./constants";
 
 export const mockRows: string[][] = [
   ["A", "June 22, 2024", "15", "-60"],
@@ -72,14 +63,6 @@ export const mockRows: string[][] = [
   ["C", "July 2, 2024", "0", "75"],
   ["C", "July 3, 2024", "0", ""],
 ];
-
-// const data: Data[] = rows.map(([id, date, lat, long]) => {
-//   return { id, date, lat, long };
-// });
-
-function isDefined<T>(value: T | null | undefined): value is NonNullable<T> {
-  return value !== null && value !== undefined;
-}
 
 export function cleanData(data: Data[]) {
   return data.filter((item) => {
@@ -204,25 +187,6 @@ export function toFramePoints(data: Data[]) {
 
 // const framePoints = toFramePoints(data);
 
-function dateRange(data: Data[]) {
-  const timestamps = data
-    .map((item) => new Date(item.date).valueOf())
-    .filter((item) => !isNaN(item));
-  if (!timestamps.length) return [0, 0];
-  const min = Math.min(...timestamps);
-  const max = Math.max(...timestamps);
-
-  return [min, max];
-}
-
-function interpolate(min: number, max: number, percent: number) {
-  if (percent < 0 || percent > 1) {
-    throw new Error(`Invalid interpolation: ${percent}`);
-  }
-  const delta = max - min;
-  return min + delta * percent;
-}
-
 function smooth(x: number) {
   return -(Math.cos(x * Math.PI) / 2) + 0.5;
 }
@@ -265,8 +229,8 @@ export function Animation() {
   const rangeMs = maxTimestamp - minTimestamp;
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <Nav />
+    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <Controls />
       <div
         style={{ display: "flex", justifyContent: "space-between", flex: 1 }}
       >
@@ -326,50 +290,11 @@ function DateProgress({ text, percent }: { text: string; percent: number }) {
   );
 }
 
-/**
- * Convert the percent progress around the arclength of a hemisphere to a
- * percent of the diameter traversed in one dimension
- *
- * @param percent - Percent of the arclength of a hemisphere from 0 to 1
- * @returns a percent of the diameter of the hemisphere from 0 to 1
- */
-function toLinear(percent: number) {
-  // percent 0 = -90 degrees
-  // percent 1 = 90 degrees
-  if (!(percent >= 0) && !(percent <= 1)) {
-    throw new Error(`Percent ${percent} out of range.`);
-  }
-
-  return (1 - Math.cos(percent * Math.PI)) / 2;
-}
-
-function toLinearCoords(spherical: [number, number]) {
-  const [px, py] = spherical;
-  if (!(px >= 0) && !(px <= 1)) {
-    throw new Error(`Percent x ${px} out of range.`);
-  } else if (!(py >= 0) && !(py <= 1)) {
-    throw new Error(`Percent y ${py} out of range.`);
-  }
-
-  const y = toLinear(py);
-
-  const yOffset = Math.abs(2 * y - 1);
-  const xOffset = Math.sqrt(1 - Math.pow(yOffset, 2));
-
-  // for a given cartesian y, what are the x boundaries
-  const xmin = 0.5 - xOffset / 2;
-  const xmax = 1 - xmin;
-
-  // interpolated
-  const x = xmin + (xmax - xmin) * toLinear(px);
-  return [x, y];
-}
-
 function FramePoints({ frame }: { frame: number }) {
   const { framePoints } = useGlobal();
   const points = framePoints[frame];
   const elems = points.map(({ id, x, y }) => {
-    const [px, py] = toLinearCoords([x, y]);
+    const { px, py } = sphericalToPosition([x, y]);
     return (
       <>
         <div
@@ -446,7 +371,7 @@ function Grid({
         // debugger;
       }
 
-      const [px, py] = toLinearCoords([colX, rowY]);
+      const { px, py } = sphericalToPosition([colX, rowY]);
       if (colX % 2 > 1) {
         // don't render lines on the back side of the sphere
         continue;

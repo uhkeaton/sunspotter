@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { cleanData, Data, mockRows, toData, toFramePoints } from "./Animation";
+import { cleanData, mockRows, toData, toFramePoints } from "./Animation";
 import { HotTableClass } from "@handsontable/react";
+import { Data, RotationData } from "./helpers";
+import { mockRotationRows, toRotationData } from "./pages/Calculator";
 
 // https://kentcdodds.com/blog/how-to-use-react-context-effectively
 const GlobalContext = React.createContext<GlobalContextValue | undefined>(
@@ -21,6 +23,8 @@ export function urlEncodeData(data: Data[]) {
 
 function useGlobalContext() {
   const gridRef = useRef<HotTableClass | null>(null);
+  const refTableRotationInput = useRef<HotTableClass | null>(null);
+  const refTableRotationOutput = useRef<HotTableClass | null>(null);
 
   let [searchParams, setSearchParams] = useSearchParams();
 
@@ -75,6 +79,28 @@ function useGlobalContext() {
     hotInstance?.scrollViewportTo({ row: data.length - 1 });
   };
 
+  // ##### START ROTATION SECTION #####
+  // ##### START ROTATION SECTION #####
+  // ##### START ROTATION SECTION #####
+
+  const [rotationAmount, setRotationAmount] = useState<number>(1);
+  const [rotationHiddenDates, setRotationHiddenDates] = useState<number[]>([]);
+
+  const [rotationData, setRotationData] = useState<RotationData[]>(
+    toRotationData(mockRotationRows)
+  );
+
+  const setUrlRotationData = (data: RotationData[]) => {
+    setRotationData(data);
+    // setSearchParams({
+    //   [URL_KEY_DATA]: urlEncodeData(data),
+    // });
+  };
+
+  // ##### END ROTATION SECTION #####
+  // ##### END ROTATION SECTION #####
+  // ##### END ROTATION SECTION #####
+
   return {
     isEdit,
     setIsEdit,
@@ -85,6 +111,15 @@ function useGlobalContext() {
     addRows: addRow,
     deleteRow,
     gridRef,
+    // #####  ROTATION SECTION #####
+    refTableRotationInput,
+    refTableRotationOutput,
+    rotationData,
+    setUrlRotationData,
+    rotationAmount,
+    setRotationAmount,
+    rotationHiddenDates,
+    setRotationHiddenDates,
   };
 }
 
