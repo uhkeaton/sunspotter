@@ -108,13 +108,47 @@ export function degToPercent(deg: number | null) {
 }
 
 /** Map range [0, 1] to [-90, 90] */
-export function percentToDeg(deg: number | null) {
-  if (deg == null || isNaN(deg)) return null;
-  return 180 * deg - 90;
+export function percentToDeg(percent: number | null) {
+  if (percent == null || isNaN(percent)) return null;
+  return 180 * percent - 90;
 }
 
 export function isDefined<T>(
   value: T | null | undefined
 ): value is NonNullable<T> {
   return value !== null && value !== undefined;
+}
+
+// rotate a position x in range [0, 1]
+// and a position y  in range [0, 1]
+// around the point [0.5, 0.5]
+export function rotatePoint({
+  px,
+  py,
+  degrees,
+}: {
+  px: number;
+  py: number;
+  degrees: number;
+}): { px: number; py: number } {
+  const CX = 0.5;
+  const CY = 0.5;
+
+  const radians = -(degrees * Math.PI) / 180;
+
+  // translate the point to the origin
+  const translatedX = px - CX;
+  const translatedY = py - CY;
+
+  // apply rotation
+  const rotatedX =
+    translatedX * Math.cos(radians) - translatedY * Math.sin(radians);
+  const rotatedY =
+    translatedX * Math.sin(radians) + translatedY * Math.cos(radians);
+
+  // Translate the point back to the original center
+  const resultX = rotatedX + CX;
+  const resultY = rotatedY + CY;
+
+  return { px: resultX, py: resultY };
 }

@@ -4,7 +4,15 @@ import "./Table.css";
 // https://handsontable.com/docs/react-data-grid/installation/
 import "handsontable/dist/handsontable.full.min.css";
 import { useGlobal } from "./useGlobal";
-import { isDefined, RotationData } from "./helpers";
+import {
+  degToPercent,
+  isDefined,
+  percentToDeg,
+  positionToSpherical,
+  rotatePoint,
+  RotationData,
+  sphericalToPosition,
+} from "./helpers";
 
 export function toRotationOutputRows(
   data: RotationData[],
@@ -12,11 +20,36 @@ export function toRotationOutputRows(
 ): string[][] {
   return data
     .map(({ date, lat, long, rotation }) => {
+      const sx = degToPercent(long) ?? 0;
+      const sy = degToPercent(lat) ?? 0;
+      const { px, py } = sphericalToPosition([sx, sy]);
+
+      const degrees = (rotation ?? 0) * rotationAmount;
+
+      const { px: rotatedPx, py: rotatedPy } = rotatePoint({
+        px: px,
+        py: py,
+
+        degrees: degrees,
+      });
+
+      const { sx: rotatedSx, sy: rotatedSy } = positionToSpherical(
+        rotatedPx,
+        rotatedPy
+      );
+
+      const rotatedLat = percentToDeg(rotatedSy);
+      const rotatedLong = percentToDeg(rotatedSx);
+
       return [
         date,
-        lat == null || isNaN(lat) ? "" : String(lat),
-        long == null || isNaN(long) ? "" : String(long),
-        rotation == null || isNaN(rotation) ? "" : String(rotation),
+        rotatedLat == null || isNaN(rotatedLat)
+          ? ""
+          : String(rotatedLat.toFixed(2)),
+        rotatedLong == null || isNaN(rotatedLong)
+          ? ""
+          : String(rotatedLong.toFixed(2)),
+        degrees == null || isNaN(degrees) ? "" : String(degrees.toFixed(2)),
       ];
     })
     .filter(isDefined);

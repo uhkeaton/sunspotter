@@ -7,6 +7,7 @@ import {
   sphericalToPosition,
   positionToSpherical,
   percentToDeg,
+  rotatePoint,
 } from "../helpers";
 import { useGlobal } from "../useGlobal";
 import { GRID_COLOR, GRID_OPACITY, SPOT_SIZE } from "../constants";
@@ -281,7 +282,9 @@ export function toHue(value: number) {
   if (value > 1) throw new Error(`Value ${value} must be less than 1`);
   // map range 0-1 to 0-300
   const hue = 300 * value;
-  return `hsl(${hue} 100% 50% / 1)`;
+  const val = hue == null || isNaN(hue) ? 0 : hue;
+  return `hsl(${val} 100% 50% / 1)`;
+  // return `hsl(${hue} 100% 50% / 1)`;
 }
 
 function cleanRotationData(data: RotationData[]) {
@@ -293,37 +296,6 @@ function cleanRotationData(data: RotationData[]) {
     if (item.rotation == null || isNaN(item.rotation)) return false;
     return true;
   });
-}
-
-function rotatePoint({
-  px,
-  py,
-  degrees,
-}: {
-  px: number;
-  py: number;
-  degrees: number;
-}): { px: number; py: number } {
-  const CX = 0.5;
-  const CY = 0.5;
-
-  const radians = (degrees * Math.PI) / 180;
-
-  // translate the point to the origin
-  const translatedX = px - CX;
-  const translatedY = py - CY;
-
-  // apply rotation
-  const rotatedX =
-    translatedX * Math.cos(radians) - translatedY * Math.sin(radians);
-  const rotatedY =
-    translatedX * Math.sin(radians) + translatedY * Math.cos(radians);
-
-  // Translate the point back to the original center
-  const resultX = rotatedX + CX;
-  const resultY = rotatedY + CY;
-
-  return { px: resultX, py: resultY };
 }
 
 function toRotationPoints(
@@ -339,8 +311,6 @@ function toRotationPoints(
     px: number;
     py: number;
     label: string;
-    lat: number | null;
-    long: number | null;
   }[] = [];
 
   cleanedData.forEach((item) => {
@@ -364,8 +334,6 @@ function toRotationPoints(
       py: rotated.py,
       hue,
       label: item.date,
-      lat: item.lat,
-      long: item.long,
     };
 
     if (rotationHiddenDates.includes(new Date(item.date).valueOf())) {
@@ -387,20 +355,7 @@ function RotationPoints() {
     rotationHiddenDates
   );
 
-  const elems = points.map(({ px, py, hue, label, long }) => {
-    
-    const { sx, sy } = positionToSpherical(px, py);
-    const back = sphericalToPosition([sx, sy]);
-
-    console.log({
-      px,
-      back: back.px,
-
-      // latConverted: convertedBack.lat,
-      // x: x,
-      // y: y,
-    });
-
+  const elems = points.map(({ px, py, hue, label }) => {
     return (
       <>
         <div
