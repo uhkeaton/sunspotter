@@ -6,20 +6,7 @@ import { Body, Equator, Observer, SiderealTime } from "astronomy-engine";
 // https://www.skymarvels.com/infopages/vids/Earth%20-%20Sub-solar%20Point%20001.htm
 // https://www.heavens-above.com/sun.aspx
 
-export function getSunRAandDec(date: Date): { RA: number; Dec: number } {
-  // Get the Sun's equatorial coordinates for the specified date
 
-  const observer = new Observer(0, 0, 0);
-  const equatorCoords = Equator(Body.Sun, date, observer, false, false);
-
-  // Right Ascension
-  const RA = equatorCoords.ra;
-
-  // Declination (Dec) in degrees
-  const Dec = equatorCoords.dec;
-
-  return { RA, Dec };
-}
 
 //
 //

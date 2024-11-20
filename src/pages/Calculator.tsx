@@ -2,11 +2,8 @@ import { useState } from "react";
 import {
   dateRange,
   degToPercent,
-  isDefined,
   RotationData,
   sphericalToPosition,
-  positionToSpherical,
-  percentToDeg,
   rotatePoint,
 } from "../helpers";
 import { useGlobal } from "../useGlobal";
@@ -38,9 +35,9 @@ export let mockRotationRows: string[][] = [
   ["10/18/2024", "7", "35", "-5"],
   ["", "", "", ""],
   //
-  ["10/21/2024", "-15", "-30", "-5"],
-  ["10/21/2024", "-18", "48", "-5"],
-  ["10/21/2024", "-23", "70", "-5"],
+  ["10/21/2024", "-15", "-30", "7"],
+  ["10/21/2024", "-18", "48", "7"],
+  ["10/21/2024", "-23", "70", "7"],
   ["", "", "", ""],
   //
   ["10/23/2024", "-6", "-50", "-8"],
@@ -77,7 +74,7 @@ export let mockRotationRows: string[][] = [
 ];
 
 export function Calculator() {
-  const { cleanedData, rotationAmount, setRotationAmount } = useGlobal();
+  const { rotationAmount, setRotationAmount } = useGlobal();
 
   const [tab, setTab] = useState("1");
   // useEffect(() => {
@@ -109,7 +106,7 @@ export function Calculator() {
 
   //   const rangeMs = maxTimestamp - minTimestamp;
 
-  const handleChange = (event: React.SyntheticEvent, newValue: string) => {
+  const handleChange = (_: React.SyntheticEvent, newValue: string) => {
     setTab(newValue);
   };
 
@@ -162,7 +159,7 @@ export function Calculator() {
               min={0}
               max={100}
               value={rotationAmount * 100}
-              onChange={(e, value) => {
+              onChange={(_, value) => {
                 if (typeof value === "number") {
                   setRotationAmount(value / 100);
                 }

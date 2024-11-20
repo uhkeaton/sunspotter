@@ -1,4 +1,4 @@
-import HotTable, { HotColumn } from "@handsontable/react";
+import HotTable from "@handsontable/react";
 import "./Table.css";
 
 // https://handsontable.com/docs/react-data-grid/installation/
@@ -58,7 +58,6 @@ export function toRotationOutputRows(
 export function TableRotationOutput() {
   const {
     rotationData,
-    setUrlRotationData,
     refTableRotationOutput,
     rotationAmount,
   } = useGlobal();
@@ -88,7 +87,7 @@ export function TableRotationOutput() {
           "Date",
           "New Latitude",
           "New Longitude",
-          "Applied Rotation",
+          "Applied Rotation Degrees",
         ]}
         // height="auto"
         stretchH={"all"}

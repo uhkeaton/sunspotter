@@ -13,6 +13,7 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
 export const PATH_ANIMATION = "/animation";
 export const PATH_PRINT = "/print";
 export const PATH_OPTICS = "/optics";
+export const PATH_EARTH = "/earth";
 export const PATH_CALCULATOR = "/calculator";
 
 const GIF_PATH = "/~georgekw/SUNSPOTTER/sunspots.gif";
@@ -37,6 +38,7 @@ export function Nav() {
       <NavLink to={PATH_OPTICS}>3D sunspotter</NavLink>
       <NavLink to={PATH_CALCULATOR}>image rotation</NavLink>
       <NavLink to={PATH_PRINT}>print screens</NavLink>
+      <NavLink to={PATH_EARTH}>earth model</NavLink>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSunRAandDec } from "./sun.helpers";
+import { useQuery } from "@tanstack/react-query";
+import { getSunRAandDec } from "./pages/Earth/useEarth";
 
 // function parseHorizonsResponse(text: string) {
 //   const lines = text.split("/n");
@@ -32,8 +32,8 @@ async function getCelestialCoordinatesOfSun() {
 
   console.log("Fetching");
 
-  const EXAMPLE_URL =
-    "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='499'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='2006-01-01'&STOP_TIME='2006-01-20'&STEP_SIZE='1%20d'&QUANTITIES='1,9,20,23,24,29'";
+  // const EXAMPLE_URL =
+  //   "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='499'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='OBSERVER'&CENTER='500@399'&START_TIME='2006-01-01'&STOP_TIME='2006-01-20'&STEP_SIZE='1%20d'&QUANTITIES='1,9,20,23,24,29'";
 
   const response = await fetch(`${url}?${params}`, {
     method: "GET",
@@ -46,8 +46,6 @@ async function getCelestialCoordinatesOfSun() {
       //   "Access-Control-Allow-Origin:": "*",
     },
   });
-
-  console.log(response);
 
   // Example usage:
   const date = new Date(startTime);
@@ -63,7 +61,7 @@ async function getCelestialCoordinatesOfSun() {
 
 export function Todos() {
   // Access the client
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   // Queries
   const query = useQuery({
