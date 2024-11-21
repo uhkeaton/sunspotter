@@ -39,8 +39,13 @@ function endOfDay(timestamp: number) {
 }
 
 export function EarthControls() {
-  const { observerLocation, setObserverLocation, setTimestamp, timestamp } =
-    useEarth();
+  const {
+    observerLocation,
+    setObserverLocation,
+    setTimestamp,
+    timestamp,
+    solarDiskRotationDeg,
+  } = useEarth();
 
   const handleChange = (newValue: Date | null) => {
     const value = newValue?.getTime();
@@ -99,7 +104,9 @@ export function EarthControls() {
       </div>
       <Divider />
       <div>
-        <Typography fontSize={12}>Observer Latitude</Typography>
+        <Typography fontSize={16}>{`Latitude: ${observerLocation.lat.toFixed(
+          0
+        )}°`}</Typography>
         <Slider
           min={-90}
           max={90}
@@ -113,7 +120,9 @@ export function EarthControls() {
         />
       </div>
       <div>
-        <Typography fontSize={12}>Observer Longitude</Typography>
+        <Typography fontSize={16}>{`Longitude: ${observerLocation.long.toFixed(
+          0
+        )}°`}</Typography>
         <Slider
           min={-180}
           max={180}
@@ -126,6 +135,9 @@ export function EarthControls() {
           defaultValue={30}
         />
       </div>
+      <Typography
+        fontSize={16}
+      >{`Solar Disk Rotation: ${solarDiskRotationDeg.toFixed(0)}°`}</Typography>
     </div>
   );
 }

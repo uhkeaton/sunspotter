@@ -158,12 +158,8 @@ function getObserverEquatorialCoords(
 
   const eclipticTiltSunCross = crossProduct(eclipticTiltVector, sunPosition);
 
-  const sunDiskImageCorrectionDeg = findSignedAngleBetweenVectors(
-    observerSunCross,
-    eclipticTiltSunCross
-  );
-
-  console.log({ sunDiskImageCorrectionDeg });
+  const solarDiskRotationDeg =
+    findSignedAngleBetweenVectors(observerSunCross, eclipticTiltSunCross) * -1;
 
   return {
     observerDec,
@@ -171,7 +167,7 @@ function getObserverEquatorialCoords(
     observerPosition,
     observerSunCross,
     eclipticTiltSunCross,
-    sunDiskImageCorrectionDeg,
+    solarDiskRotationDeg,
   };
 }
 
@@ -203,7 +199,7 @@ function useEarthContext() {
     observerPosition,
     observerSunCross,
     eclipticTiltSunCross,
-    sunDiskImageCorrectionDeg,
+    solarDiskRotationDeg,
   } = useMemo(() => {
     const { sunRADeg, sunDec, earthRotationDeg, sunPosition } = getSunAndEarth(
       new Date(timestamp)
@@ -215,7 +211,7 @@ function useEarthContext() {
       observerPosition,
       observerSunCross,
       eclipticTiltSunCross,
-      sunDiskImageCorrectionDeg,
+      solarDiskRotationDeg,
     } = getObserverEquatorialCoords(
       observerLocation,
       earthRotationDeg,
@@ -232,7 +228,7 @@ function useEarthContext() {
       observerPosition,
       observerSunCross,
       eclipticTiltSunCross,
-      sunDiskImageCorrectionDeg,
+      solarDiskRotationDeg,
     };
   }, [timestamp, observerLocation]);
 
@@ -262,7 +258,7 @@ function useEarthContext() {
     observerPosition,
     observerSunCross,
     eclipticTiltSunCross,
-    sunDiskImageCorrectionDeg,
+    solarDiskRotationDeg,
   };
 }
 
