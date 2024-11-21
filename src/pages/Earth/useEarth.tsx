@@ -1,6 +1,6 @@
 import { Body, Equator, Observer, SiderealTime } from "astronomy-engine";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ECLIPTIC_TILT_DEGREES } from "./Earth3D";
 
 export const SUN_INITIAL_POSITION = [3, 0, 0];
@@ -8,6 +8,8 @@ export const SUN_INITIAL_POSITION = [3, 0, 0];
 export type Vector3D = { x: number; y: number; z: number };
 export type GeographicLocation = { lat: number; long: number };
 export type EquatorialCoords = { ra: number; dec: number };
+
+export const SUN_DIST_MODEL = 3;
 
 function findSignedAngleBetweenVectors(u: Vector3D, v: Vector3D): number {
   //  dot product
@@ -35,6 +37,7 @@ function findSignedAngleBetweenVectors(u: Vector3D, v: Vector3D): number {
 
   // Determine the sign using a reference axis (e.g., the Z-axis)
   const referenceAxis = { x: 0, y: 0, z: 1 }; // Modify if needed
+
   const sign = Math.sign(
     crossProduct.x * referenceAxis.x +
       crossProduct.y * referenceAxis.y +
@@ -125,7 +128,7 @@ function getSunAndEarth(date: Date) {
 
   const sunPos = scaleVector(
     toThreeVector(geographicToCartesian({ lat: sunDec, long: -sunRADeg })),
-    3
+    SUN_DIST_MODEL
   );
 
   return {
@@ -158,8 +161,12 @@ function getObserverEquatorialCoords(
 
   const eclipticTiltSunCross = crossProduct(eclipticTiltVector, sunPosition);
 
+  // helps determine the sign of the angle between the two cross products being compared
+  const sunHemisphereSign = Math.sign(sunPosition.y);
+
   const solarDiskRotationDeg =
-    findSignedAngleBetweenVectors(observerSunCross, eclipticTiltSunCross) * -1;
+    findSignedAngleBetweenVectors(observerSunCross, eclipticTiltSunCross) *
+    -sunHemisphereSign;
 
   return {
     observerDec,
@@ -176,17 +183,18 @@ const EarthContext = React.createContext<EarthContextValue | undefined>(
   undefined
 );
 
-const NOW = new Date().valueOf();
+export const NOW = new Date().valueOf();
 
 // https://data.giss.nasa.gov/modelE/ar5plots/srvernal.html
-const VERNAL_EQUINOX = new Date("2024-03-20T03:06:00Z").valueOf();
+export const VERNAL_EQUINOX = new Date("2024-03-20T03:06:00Z").valueOf();
 
 function useEarthContext() {
   // const date = new Date();
-  const [timestamp, setTimestamp] = useState<number>(VERNAL_EQUINOX);
+  const [timestamp, setTimestamp] = useState<number>(NOW);
   const [observerLocation, setObserverLocation] = useState<GeographicLocation>({
-    lat: 0,
-    long: 0,
+    lat: 19,
+    long: -155,
+    // Hilo
   });
 
   const {
@@ -232,17 +240,22 @@ function useEarthContext() {
     };
   }, [timestamp, observerLocation]);
 
-  useEffect(() => {
+  const setLocationCurrent = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        setObserverLocation({
-          lat: position.coords.latitude,
-          long: position.coords.longitude,
-        });
-        console.log(position.coords);
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setObserverLocation({
+            lat: position.coords.latitude,
+            long: position.coords.longitude,
+          });
+          console.log(position.coords);
+        },
+        () => window.alert("An error occured.")
+      );
+    } else {
+      window.alert("An error occured.");
     }
-  }, []);
+  };
 
   return {
     observerLocation,
@@ -259,6 +272,7 @@ function useEarthContext() {
     observerSunCross,
     eclipticTiltSunCross,
     solarDiskRotationDeg,
+    setLocationCurrent,
   };
 }
 

@@ -16,7 +16,7 @@ export const PATH_OPTICS = "/optics";
 export const PATH_EARTH = "/earth";
 export const PATH_CALCULATOR = "/calculator";
 
-const GIF_PATH = "/~georgekw/SUNSPOTTER/sunspots.gif";
+export const SUNSPOTS_GIF_PATH = "/~georgekw/SUNSPOTTER/sunspots.gif";
 
 export function Nav() {
   //   const { isEdit, setIsEdit, setUrlData, addRows, deleteRow } = useGlobal();
@@ -33,7 +33,10 @@ export function Nav() {
         borderBottom: "1px solid rgba(88, 86, 82, 0.5)",
       }}
     >
-      <img style={{ width: 48, height: 48, marginRight: 16 }} src={GIF_PATH} />
+      <img
+        style={{ width: 48, height: 48, marginRight: 16 }}
+        src={SUNSPOTS_GIF_PATH}
+      />
       <NavLink to={PATH_ANIMATION}>spot animation</NavLink>
       <NavLink to={PATH_OPTICS}>3D sunspotter</NavLink>
       <NavLink to={PATH_CALCULATOR}>image rotation</NavLink>

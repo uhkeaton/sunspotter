@@ -1,12 +1,10 @@
-import { Body, Equator, Observer, SiderealTime } from "astronomy-engine";
+import { SiderealTime } from "astronomy-engine";
 // import { Angle, Location, Time } from "astronomy-engine";
 
 // https://rl.se/zenithold.php
 // https://theskylive.com/where-is-sun#:~:text=The%20Sun%20is%20currently%20in,19%C2%B0%2017'%2011%E2%80%9D%20.
 // https://www.skymarvels.com/infopages/vids/Earth%20-%20Sub-solar%20Point%20001.htm
 // https://www.heavens-above.com/sun.aspx
-
-
 
 //
 //

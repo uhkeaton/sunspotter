@@ -1,23 +1,22 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { scaleVector, Vector3D, useEarth } from "./useEarth";
+import { scaleVector, Vector3D, useEarth, SUN_DIST_MODEL } from "./useEarth";
 
 const SQUIRTLE_PATH = "/~georgekw/SUNSPOTTER/squirtle.glb";
-const EARTH_PATH = "/~georgekw/SUNSPOTTER/earth_lat_long.glb";
+const EARTH_PATH = "/~georgekw/SUNSPOTTER/earth.glb";
 const SUN_PATH = "/~georgekw/SUNSPOTTER/sun.glb";
+const HDR_PATH = "/~georgekw/SUNSPOTTER/starry.hdr";
 
-const HDR_PATH =
-  //   "https://threejs.org/examples/textures/equirectangular/royal_esplanade_1k.hdr";
-  // "/~georgekw/SUNSPOTTER/countryside_sunny_road_2k.hdr";
-  "/~georgekw/SUNSPOTTER/starry.hdr";
+// example hdri path
+// "https://threejs.org/examples/textures/equirectangular/royal_esplanade_1k.hdr";
 
-// const HELMET_PATH =
-//   "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
+// example geometry path
+// "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
 
 export const ECLIPTIC_TILT_DEGREES = 23.44;
 const ECLIPTIC_TILT_RADIANS = degreesToRadians(23.44);
@@ -28,6 +27,8 @@ let sun: THREE.Group<THREE.Object3DEventMap>;
 let sunLight: THREE.PointLight;
 let axisCrossA: THREE.Mesh;
 let axisCrossB: THREE.Mesh;
+
+// let axisCrossC: THREE.Mesh;
 let axisX: THREE.Mesh;
 let axisY: THREE.Mesh;
 let axisZ: THREE.Mesh;
@@ -55,9 +56,10 @@ function updateSun(sunPosition: Vector3D) {
     const lightPos = scaleVector(sunPosition, 30);
     sunLight.position.set(lightPos.x, lightPos.y, lightPos.z);
     //
-    const crossPos = scaleVector(sunPosition, 0.333);
+    const crossPos = scaleVector(sunPosition, 1 / SUN_DIST_MODEL);
     axisCrossA.position.set(crossPos.x, crossPos.y, crossPos.z);
     axisCrossB.position.set(crossPos.x, crossPos.y, crossPos.z);
+    // axisCrossC.position.set(crossPos.x, crossPos.y, crossPos.z);
   }
 }
 function updateObserver(
@@ -71,19 +73,16 @@ function updateObserver(
     squirtle.position.set(x, y, z);
     squirtle.up.set(x, y, z);
 
-    const infinitelyFarSunPos = scaleVector(sunPosition, 9999);
+    const farSunPos = scaleVector(sunPosition, 9999);
 
-    squirtle.lookAt(
-      infinitelyFarSunPos.x,
-      infinitelyFarSunPos.y,
-      infinitelyFarSunPos.z
-    );
+    squirtle.lookAt(farSunPos.x, farSunPos.y, farSunPos.z);
 
     const lookAtA = scaleVector(observerSunCross, 9999);
     const lookAtB = scaleVector(eclipticTiltSunCross, 9999);
 
     axisCrossA.lookAt(lookAtA.x, lookAtA.y, lookAtA.z);
     axisCrossB.lookAt(lookAtB.x, lookAtB.y, lookAtB.z);
+    // axisCrossC.lookAt(farSunPos.x, farSunPos.y, farSunPos.z);
   }
 }
 
@@ -96,6 +95,28 @@ export function Earth3D() {
     eclipticTiltSunCross,
   } = useEarth();
   const refContainer = useRef<HTMLDivElement | null>(null);
+
+  const update = useCallback(() => {
+    if (earth) {
+      earth.rotation.y = degreesToRadians(earthRotationDeg);
+    }
+    updateSun(sunPosition);
+    updateObserver(
+      observerPosition,
+      sunPosition,
+      observerSunCross,
+      eclipticTiltSunCross
+    );
+    render();
+  }, [
+    earthRotationDeg,
+    sunPosition,
+    observerPosition,
+    observerSunCross,
+    eclipticTiltSunCross,
+  ]);
+
+  useEffect(() => update(), [update]);
 
   useEffect(() => {
     init();
@@ -133,7 +154,7 @@ export function Earth3D() {
             squirtle.castShadow = true;
             await renderer.compileAsync(squirtle, camera, scene);
             scene.add(squirtle);
-            render();
+            update();
           });
 
           loader.load(EARTH_PATH, async function (gltf) {
@@ -148,6 +169,7 @@ export function Earth3D() {
 
             await renderer.compileAsync(earth, camera, scene);
             scene.add(earth);
+            update();
           });
 
           loader.load(SUN_PATH, async function (gltf) {
@@ -165,11 +187,8 @@ export function Earth3D() {
             // sunLight.shadow.camera.near = 0.5; // default
             // sunLight.shadow.camera.far = 500; // default
 
-            // const { x, y, z } = sunPosition;
-
             updateSun(sunPosition);
 
-            // sun.position.set(x, y, z);
             scene.add(sun);
             scene.add(sunLight);
 
@@ -177,14 +196,15 @@ export function Earth3D() {
 
             const ambientLight = new THREE.AmbientLight(0x404040, 5); // soft white light
             scene.add(ambientLight);
-            render();
+            update();
           });
 
-          const W = 0.005;
+          const W = 0.004;
+          const L = 1.25;
 
-          const geoAxisX = new THREE.CylinderGeometry(W, W, 1);
-          const geoAxisY = new THREE.CylinderGeometry(W, W, 1);
-          const geoAxisZ = new THREE.CylinderGeometry(W, W, 1);
+          const geoAxisX = new THREE.CylinderGeometry(W, W, L);
+          const geoAxisY = new THREE.CylinderGeometry(W, W, L);
+          const geoAxisZ = new THREE.CylinderGeometry(W, W, L);
 
           const matRed = new THREE.MeshBasicMaterial({ color: 0xff0000 });
           const matGreen = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -193,40 +213,52 @@ export function Earth3D() {
           if (!axisX) {
             axisX = new THREE.Mesh(geoAxisX, matRed);
             axisX.rotation.set(0, 0, degreesToRadians(90));
-            axisX.position.set(1, 0, 0);
+            axisX.position.set(L / 2, 0, 0);
             scene.add(axisX);
           }
 
           if (!axisY) {
             axisY = new THREE.Mesh(geoAxisY, matGreen);
-            axisY.position.set(0, 1, 0);
+            axisY.position.set(0, L / 2, 0);
             scene.add(axisY);
           }
 
           if (!axisZ) {
             axisZ = new THREE.Mesh(geoAxisZ, matBlue);
             axisZ.rotation.set(degreesToRadians(90), 0, 0);
-            axisZ.position.set(0, 0, 1);
+            axisZ.position.set(0, 0, L / 2);
             scene.add(axisZ);
           }
 
           // cross product vectors a
-          const geoAxisCross = new THREE.BoxGeometry(0.01, 0.01, 0.25);
+          const ARROW_LEN = 0.15;
+          const geoAxisCross = new THREE.BoxGeometry(0.01, 0.01, ARROW_LEN);
+          geoAxisCross.translate(0, 0, ARROW_LEN / 2);
+
           if (!axisCrossA) {
             axisCrossA = new THREE.Mesh(geoAxisCross, matRed);
             axisCrossA.position.set(0, 0, 0);
             scene.add(axisCrossA);
           }
 
-          // cross product vector b
           if (!axisCrossB) {
             axisCrossB = new THREE.Mesh(geoAxisCross, matBlue);
             axisCrossB.position.set(0, 0, 0);
             scene.add(axisCrossB);
           }
 
+          // if (!axisCrossC) {
+          //   axisCrossC = new THREE.Mesh(geoAxisCross, matGreen);
+          //   axisCrossC.position.set(0, 0, 0);
+          //   scene.add(axisCrossC);
+          // }
+
           if (!ecliptic) {
-            const geoEcliptic = new THREE.CylinderGeometry(3, 3, 0.01);
+            const geoEcliptic = new THREE.CylinderGeometry(
+              SUN_DIST_MODEL,
+              SUN_DIST_MODEL,
+              0.01
+            );
             const glassMat = new THREE.MeshPhysicalMaterial({
               metalness: 0.5,
               roughness: 0.1,
@@ -306,20 +338,6 @@ export function Earth3D() {
       renderer.dispose();
     };
   }, []);
-
-  useEffect(() => {
-    if (earth) {
-      earth.rotation.y = degreesToRadians(earthRotationDeg);
-    }
-    updateSun(sunPosition);
-    updateObserver(
-      observerPosition,
-      sunPosition,
-      observerSunCross,
-      eclipticTiltSunCross
-    );
-    render();
-  }, [earthRotationDeg, sunPosition, observerPosition, observerSunCross]);
 
   return <div ref={refContainer}></div>;
 }

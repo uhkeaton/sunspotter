@@ -2,6 +2,9 @@ import { Divider, Slider, Typography } from "@mui/material";
 import { useEarth } from "./useEarth";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { EarthControlsMenu } from "./EarthControlsMenu";
+import { SUNSPOTS_GIF_PATH } from "../../Nav";
+import { NorthArrowSvg } from "./NorthArrowSvg";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MS_PER_MINUTE = 60 * 1000;
@@ -57,7 +60,29 @@ export function EarthControls() {
   return (
     <div style={{ width: 200 }}>
       {/* <Typography fontSize={12}>{new Date(timestamp)}</Typography> */}
-
+      <div
+        style={{
+          marginBottom: 16,
+        }}
+      >
+        <div
+          style={{
+            marginBottom: 8,
+            paddingRight: 8,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <SunDisk />
+          <EarthControlsMenu />
+        </div>
+        <Typography
+          fontSize={16}
+        >{`Solar Disk Rotation: ${solarDiskRotationDeg.toFixed(
+          0
+        )}°`}</Typography>
+      </div>
       <div style={{ marginBottom: 16 }}>
         <DatePicker
           label="Date"
@@ -73,7 +98,7 @@ export function EarthControls() {
         />
       </div>
       <div>
-        <Typography fontSize={12}>Date</Typography>
+        <Typography fontSize={16}>Date</Typography>
         <Slider
           min={startOfYear(timestamp).valueOf()}
           max={endOfYear(timestamp).valueOf()}
@@ -84,11 +109,11 @@ export function EarthControls() {
               setTimestamp(value);
             }
           }}
-          defaultValue={timestamp}
+          // defaultValue={timestamp}
         />
       </div>
-      <div>
-        <Typography fontSize={12}>Time</Typography>
+      <div style={{ marginBottom: 16 }}>
+        <Typography fontSize={16}>Time</Typography>
         <Slider
           min={startOfDay(timestamp).valueOf()}
           max={endOfDay(timestamp).valueOf()}
@@ -99,10 +124,11 @@ export function EarthControls() {
               setTimestamp(value);
             }
           }}
-          defaultValue={timestamp}
+          // defaultValue={timestamp}
         />
+        <Divider />
       </div>
-      <Divider />
+
       <div>
         <Typography fontSize={16}>{`Latitude: ${observerLocation.lat.toFixed(
           0
@@ -119,7 +145,7 @@ export function EarthControls() {
           defaultValue={30}
         />
       </div>
-      <div>
+      <div style={{ marginBottom: 16 }}>
         <Typography fontSize={16}>{`Longitude: ${observerLocation.long.toFixed(
           0
         )}°`}</Typography>
@@ -134,10 +160,47 @@ export function EarthControls() {
           }}
           defaultValue={30}
         />
+        <Divider />
       </div>
-      <Typography
-        fontSize={16}
-      >{`Solar Disk Rotation: ${solarDiskRotationDeg.toFixed(0)}°`}</Typography>
+    </div>
+  );
+}
+
+function SunDisk() {
+  const { solarDiskRotationDeg } = useEarth();
+  const SIZE = 64;
+  const SUN_SIZE = 64;
+  const ARROW_SIZE = 24;
+  return (
+    <div>
+      <div
+        style={{
+          position: "relative",
+          width: SIZE,
+          height: SIZE,
+          transform: `rotate(${solarDiskRotationDeg}deg)`,
+        }}
+      >
+        <img
+          style={{
+            position: "absolute",
+            width: SUN_SIZE,
+            marginRight: 16,
+            left: SIZE / 2 - SUN_SIZE / 2,
+            top: (SIZE - SUN_SIZE) / 2,
+          }}
+          src={SUNSPOTS_GIF_PATH}
+        />
+        <NorthArrowSvg
+          size={ARROW_SIZE}
+          style={{
+            position: "absolute",
+            top: 4,
+            left: SIZE / 2 - ARROW_SIZE / 2,
+            color: "#a50000",
+          }}
+        />
+      </div>
     </div>
   );
 }
