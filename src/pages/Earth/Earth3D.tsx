@@ -5,7 +5,14 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
-import { useEarth } from "./useEarth";
+import {
+  GeographicLocation,
+  geographicToCartesian,
+  scaleVector,
+  SimpleVector,
+  toThreeVector,
+  useEarth,
+} from "./useEarth";
 
 const SQUIRTLE_PATH = "/~georgekw/SUNSPOTTER/squirtle.glb";
 const EARTH_PATH = "/~georgekw/SUNSPOTTER/earth_lat_long.glb";
@@ -13,16 +20,18 @@ const SUN_PATH = "/~georgekw/SUNSPOTTER/sun.glb";
 
 const HDR_PATH =
   //   "https://threejs.org/examples/textures/equirectangular/royal_esplanade_1k.hdr";
-  "/~georgekw/SUNSPOTTER/countryside_sunny_road_2k.hdr";
+  // "/~georgekw/SUNSPOTTER/countryside_sunny_road_2k.hdr";
+  "/~georgekw/SUNSPOTTER/starry.hdr";
 
 // const HELMET_PATH =
 //   "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
 
-const EARTH_TILT_RADIANS = degreesToRadians(-23.44);
+const ECLIPTIC_TILT_RADIANS = degreesToRadians(23.44);
 
 let squirtle: THREE.Group<THREE.Object3DEventMap>;
 let earth: THREE.Group<THREE.Object3DEventMap>;
 let sun: THREE.Group<THREE.Object3DEventMap>;
+let sunLight: THREE.PointLight;
 
 let renderer = new THREE.WebGLRenderer({ antialias: true });
 let scene = new THREE.Scene();
@@ -31,15 +40,49 @@ let camera = new THREE.PerspectiveCamera(
   45,
   window.innerWidth / window.innerHeight,
   0.25,
-  20
+  100
 );
 
 function render() {
   renderer.render(scene, camera);
 }
 
+function updateSun(sunPosAE: SimpleVector) {
+  if (sun && sunLight) {
+    sun.position.set(sunPosAE.x, sunPosAE.y, sunPosAE.z);
+    const lightPos = scaleVector(sunPosAE, 30);
+    sunLight.position.set(lightPos.x, lightPos.y, lightPos.z);
+  }
+}
+function updateObserver(
+  observerLocation: GeographicLocation,
+  earthRotationDeg: number,
+  sunPosAE: SimpleVector
+) {
+  if (squirtle) {
+    const infinitelyFarSunPos = scaleVector(sunPosAE, 9999);
+    squirtle.lookAt(
+      infinitelyFarSunPos.x,
+      infinitelyFarSunPos.y,
+      infinitelyFarSunPos.z
+    );
+
+    const { lat, long } = observerLocation;
+    const { x, y, z } = scaleVector(
+      toThreeVector(
+        geographicToCartesian({
+          lat: lat,
+          long: -earthRotationDeg - long,
+        })
+      ),
+      1.2
+    );
+    squirtle.position.set(x, y, z);
+  }
+}
+
 export function Earth3D() {
-  const { observerLat, earthRotationDeg, sunPos } = useEarth();
+  const { observerLocation, earthRotationDeg, sunPosAE } = useEarth();
   const refContainer = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -76,6 +119,8 @@ export function Earth3D() {
             const SCALE = 0.04;
             squirtle.scale.set(SCALE, SCALE, SCALE);
             squirtle.position.set(0, 1.1, 0);
+            squirtle.receiveShadow = true;
+            squirtle.castShadow = true;
             await renderer.compileAsync(squirtle, camera, scene);
             scene.add(squirtle);
             render();
@@ -87,37 +132,74 @@ export function Earth3D() {
             SCALE = 1;
             earth.scale.set(SCALE, SCALE, SCALE);
             earth.position.set(0, 0, 0);
-            earth.rotation.y = earthRotationDeg;
-
-            // rotation order is xyz
-            // https://threejs.org/docs/#api/en/math/Euler.order
-            earth.rotation.x = EARTH_TILT_RADIANS;
+            earth.rotation.y = degreesToRadians(earthRotationDeg);
+            earth.castShadow = true;
 
             await renderer.compileAsync(earth, camera, scene);
             scene.add(earth);
           });
+
           loader.load(SUN_PATH, async function (gltf) {
             sun = gltf.scene;
             const SCALE = 0.5;
             sun.scale.set(SCALE, SCALE, SCALE);
-            sun.position.set(3, 0, 0);
+            sun.rotation.x = ECLIPTIC_TILT_RADIANS;
+            sunLight = new THREE.PointLight("#fdfbd3", 20, 100, 0);
+            sunLight.castShadow = true;
+
+            //Set up shadow properties for the light
+            sunLight.shadow.mapSize.width = 512; // default
+            sunLight.shadow.mapSize.height = 512; // default
+            sunLight.shadow.camera.near = 0.5; // default
+            sunLight.shadow.camera.far = 500; // default
+
+            //Create a helper for the shadow camera (optional)
+            const helper = new THREE.CameraHelper(sunLight.shadow.camera);
+            scene.add(helper);
+
+            // const { x, y, z } = sunPosAE;
+
+            updateSun(sunPosAE);
+
+            // sun.position.set(x, y, z);
+            scene.add(sun);
+            scene.add(sunLight);
 
             await renderer.compileAsync(sun, camera, scene);
-            scene.add(sun);
+
+            const ambientLight = new THREE.AmbientLight(0x404040, 5); // soft white light
+            scene.add(ambientLight);
             render();
           });
 
-          const geoAxis = new THREE.CylinderGeometry(0.01, 0.01, 2.5);
-          const matAxis = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-          const axis = new THREE.Mesh(geoAxis, matAxis);
-          axis.rotation.x = EARTH_TILT_RADIANS;
-          axis.position.set(0, 0, 0);
-          scene.add(axis);
+          const geoAxisX = new THREE.CylinderGeometry(0.01, 0.01, 1);
+          const geoAxisY = new THREE.CylinderGeometry(0.01, 0.01, 1);
+          const geoAxisZ = new THREE.CylinderGeometry(0.01, 0.01, 1);
+
+          const matAxisX = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+          const matAxisY = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          const matAxisZ = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+
+          const axisX = new THREE.Mesh(geoAxisX, matAxisX);
+          const axisY = new THREE.Mesh(geoAxisY, matAxisY);
+          const axisZ = new THREE.Mesh(geoAxisZ, matAxisZ);
+
+          axisX.rotation.set(0, 0, degreesToRadians(90));
+          axisX.position.set(1, 0, 0);
+
+          axisY.position.set(0, 1, 0);
+
+          axisZ.rotation.set(degreesToRadians(90), 0, 0);
+          axisZ.position.set(0, 0, 1);
+
+          scene.add(axisX);
+          scene.add(axisY);
+          scene.add(axisZ);
 
           const geoEcliptic = new THREE.CylinderGeometry(3, 3, 0.01);
           const glassMat = new THREE.MeshPhysicalMaterial({
-            metalness: 0.9,
-            roughness: 0.05,
+            metalness: 0.5,
+            roughness: 0.1,
             envMapIntensity: 0.9,
             clearcoat: 1,
             transparent: true,
@@ -130,6 +212,9 @@ export function Earth3D() {
           });
 
           const ecliptic = new THREE.Mesh(geoEcliptic, glassMat);
+          // rotation order is xyz
+          // https://threejs.org/docs/#api/en/math/Euler.order
+          ecliptic.rotation.x = ECLIPTIC_TILT_RADIANS;
           ecliptic.position.set(0, 0, 0);
           scene.add(ecliptic);
 
@@ -142,8 +227,6 @@ export function Earth3D() {
 
           var animate = function () {
             requestAnimationFrame(animate);
-            // earth.rotation.y += degreesToRadians(0.05);
-            squirtle.rotation.y += degreesToRadians(0.05);
             sun.rotation.y += degreesToRadians(0.05);
             render();
           };
@@ -155,6 +238,8 @@ export function Earth3D() {
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1;
+      // https://threejs.org/docs/#api/en/lights/shadows/DirectionalLightShadow
+      renderer.shadowMap.enabled = true;
       //   container.appendChild(renderer.domElement);
 
       refContainer.current &&
@@ -163,7 +248,7 @@ export function Earth3D() {
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.addEventListener("change", render); // use if there is no animation loop
       controls.minDistance = 0.5;
-      controls.maxDistance = 20;
+      controls.maxDistance = 100;
       controls.target.set(0, 0, 0);
       controls.update();
 
@@ -181,21 +266,13 @@ export function Earth3D() {
   }, []);
 
   useEffect(() => {
-    // if (earth) {
-    //   earth.rotation.y = degreesToRadians(observerLat);
-    // }
-    render();
-  }, [observerLat]);
-
-  useEffect(() => {
     if (earth) {
-      earth.rotation.y = earthRotationDeg;
+      earth.rotation.y = degreesToRadians(earthRotationDeg);
     }
-    if (sun) {
-      sun.position.set(sunPos.x, sunPos.y, sunPos.z);
-    }
+    updateSun(sunPosAE);
+    updateObserver(observerLocation, earthRotationDeg, sunPosAE);
     render();
-  }, [earthRotationDeg, sunPos]);
+  }, [earthRotationDeg, sunPosAE, observerLocation]);
 
   return <div ref={refContainer}></div>;
 }
