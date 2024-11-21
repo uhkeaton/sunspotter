@@ -53,19 +53,20 @@ export function EarthControls() {
     <div style={{ width: 200 }}>
       {/* <Typography fontSize={12}>{new Date(timestamp)}</Typography> */}
 
-      <div>
+      <div style={{ marginBottom: 16 }}>
         <DatePicker
-          label="Local Date"
+          label="Date"
           value={new Date(timestamp)}
           onChange={handleChange}
         />
       </div>
-
-      <TimePicker
-        label="Local Time"
-        value={new Date(timestamp)}
-        onChange={handleChange}
-      />
+      <div style={{ marginBottom: 16 }}>
+        <TimePicker
+          label="Time"
+          value={new Date(timestamp)}
+          onChange={handleChange}
+        />
+      </div>
       <div>
         <Typography fontSize={12}>Date</Typography>
         <Slider
