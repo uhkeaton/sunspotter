@@ -37,11 +37,11 @@ export function Nav() {
         style={{ width: 48, height: 48, marginRight: 16 }}
         src={SUNSPOTS_GIF_PATH}
       />
-      <NavLink to={PATH_ANIMATION}>spot animation</NavLink>
-      <NavLink to={PATH_OPTICS}>3D sunspotter</NavLink>
-      <NavLink to={PATH_CALCULATOR}>image rotation</NavLink>
-      <NavLink to={PATH_PRINT}>print screens</NavLink>
-      <NavLink to={PATH_EARTH}>earth model</NavLink>
+      <NavLink to={PATH_OPTICS}>1. sunspotter</NavLink>
+      <NavLink to={PATH_PRINT}>2. print screens</NavLink>
+      <NavLink to={PATH_CALCULATOR}>3. image rotation</NavLink>
+      <NavLink to={PATH_EARTH}>4. earth model</NavLink>
+      <NavLink to={PATH_ANIMATION}>5. spot animation</NavLink>
     </div>
   );
 }
