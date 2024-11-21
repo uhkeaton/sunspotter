@@ -60,24 +60,30 @@ function updateObserver(
   sunPosAE: SimpleVector
 ) {
   if (squirtle) {
+    const { lat, long } = observerLocation;
+    const adjustedLong = -earthRotationDeg - long;
+    const { x, y, z } = scaleVector(
+      toThreeVector(
+        geographicToCartesian({
+          lat: lat,
+          long: adjustedLong,
+        })
+      ),
+      1.2
+    );
+    squirtle.position.set(x, y, z);
+    squirtle.up.set(x, y, z);
+
     const infinitelyFarSunPos = scaleVector(sunPosAE, 9999);
     squirtle.lookAt(
       infinitelyFarSunPos.x,
       infinitelyFarSunPos.y,
       infinitelyFarSunPos.z
     );
-
-    const { lat, long } = observerLocation;
-    const { x, y, z } = scaleVector(
-      toThreeVector(
-        geographicToCartesian({
-          lat: lat,
-          long: -earthRotationDeg - long,
-        })
-      ),
-      1.2
-    );
-    squirtle.position.set(x, y, z);
+    // squirtle.rotation.y = degreesToRadians(90);
+    // squirtle.rotation.z = degreesToRadians(-lat + 90);
+    // squirtle.rotation.y = degreesToRadians(adjustedLong + 90);
+    // squirtle.rotation.z = -degreesToRadians(lat);
   }
 }
 
@@ -148,14 +154,10 @@ export function Earth3D() {
             sunLight.castShadow = true;
 
             //Set up shadow properties for the light
-            sunLight.shadow.mapSize.width = 512; // default
-            sunLight.shadow.mapSize.height = 512; // default
-            sunLight.shadow.camera.near = 0.5; // default
-            sunLight.shadow.camera.far = 500; // default
-
-            //Create a helper for the shadow camera (optional)
-            const helper = new THREE.CameraHelper(sunLight.shadow.camera);
-            scene.add(helper);
+            // sunLight.shadow.mapSize.width = 512; // default
+            // sunLight.shadow.mapSize.height = 512; // default
+            // sunLight.shadow.camera.near = 0.5; // default
+            // sunLight.shadow.camera.far = 500; // default
 
             // const { x, y, z } = sunPosAE;
 
